@@ -51,10 +51,10 @@ export default function BookingPage({ params }: BookingPageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-bg flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading booking interface...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-4"></div>
+          <p className="text-fg-muted">Loading booking interface...</p>
         </div>
       </div>
     );
@@ -62,17 +62,17 @@ export default function BookingPage({ params }: BookingPageProps) {
 
   if (error || !accessToken) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-bg flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Booking Not Available</h1>
-          <p className="text-muted-foreground mb-4">
+          <h1 className="text-2xl font-bold text-fg mb-4">Booking not available</h1>
+          <p className="text-fg-muted mb-4">
             {error || 'Unable to load booking interface for this user.'}
           </p>
           <a 
             href="/" 
-            className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-brand text-brand-foreground rounded-md hover:opacity-95 transition-opacity"
           >
-            Return Home
+            Return home
           </a>
         </div>
       </div>
@@ -80,14 +80,14 @@ export default function BookingPage({ params }: BookingPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-bg">
       <div className="container mx-auto max-w-3xl px-4 py-8">
-        <div className="rounded-lg border border-border bg-card p-6 shadow-md">
+        <div className="rounded-md border border-border bg-bg-elevated p-6 shadow-sm">
           <div className="mb-6 text-center">
-            <h1 className="text-3xl font-bold text-card-foreground">
+            <h1 className="text-3xl font-bold text-fg">
               Schedule with {username}
             </h1>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-2 text-fg-muted">
               Choose a time that works for you
             </p>
           </div>
@@ -113,39 +113,18 @@ export default function BookingPage({ params }: BookingPageProps) {
             ) : (
               <div className="text-center p-8">
                 <div className="mb-6">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-primary text-2xl">📅</span>
+                  <div className="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-brand text-2xl">📅</span>
                   </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">
-                    Booking Interface (Fallback Mode)
+                  <h3 className="text-xl font-semibold text-fg mb-2">
+                    Booking interface unavailable
                   </h3>
-                  <p className="text-muted-foreground mb-4">
-                    Using fallback token. Cal.com integration is working but needs real token for full functionality.
+                  <p className="text-fg-muted mb-4">
+                    Unable to load the booking interface at this time. Please try again later.
                   </p>
-                </div>
-                
-                <div className="bg-muted/50 rounded-lg p-4 mb-6">
-                  <h4 className="font-medium text-foreground mb-2">Integration Status:</h4>
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <p><strong>Managed User:</strong> ✅ Created in Cal.com</p>
-                    <p><strong>Access Token:</strong> ⚠️ Fallback Token</p>
-                    <p><strong>API Integration:</strong> ✅ Working</p>
-                    <p><strong>Webhooks:</strong> ✅ Configured</p>
-                    <p><strong>Cal.com Components:</strong> ⚠️ Import issues with Next.js 14</p>
-                  </div>
                 </div>
               </div>
             )}
-          </div>
-          
-          {/* Debug Info - Remove in production */}
-          <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-dashed">
-            <h4 className="font-medium text-foreground mb-2 text-sm">Debug Info:</h4>
-            <div className="text-xs text-muted-foreground space-y-1">
-              <p><strong>User:</strong> {username}</p>
-              <p><strong>Token:</strong> {accessToken ? (accessToken.startsWith('eyJ') ? '✅ Real JWT Token' : '⚠️ Fallback Token') : '❌ Invalid'}</p>
-              <p><strong>Client ID:</strong> {process.env.NEXT_PUBLIC_CAL_CLIENT_ID ? '✅ Set' : '❌ Missing'}</p>
-            </div>
           </div>
         </div>
       </div>
