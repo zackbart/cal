@@ -1,0 +1,28 @@
+{
+  "name": "churchhub-worker",
+  "version": "1.0.0",
+  "description": "ChurchHub background workers for reminders and AI summaries",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:dev": "ts-node src/index.ts",
+    "dev": "nodemon --exec ts-node src/index.ts"
+  },
+  "keywords": ["church", "scheduling", "workers", "background-jobs"],
+  "author": "ChurchHub",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "bullmq": "^5.0.0",
+    "ioredis": "^5.3.2",
+    "pg": "^8.16.3",
+    "typeorm": "^0.3.27"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.2",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
