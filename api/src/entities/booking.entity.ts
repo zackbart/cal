@@ -10,13 +10,22 @@ export class Booking {
   id: string;
 
   @Column()
-  calBookingId: string; // Cal.com booking ID
+  calBookingId: number; // Cal.com booking ID
+
+  @Column({ nullable: true })
+  calBookingUid: string; // Cal.com booking UID
 
   @Column()
   userId: string;
 
   @Column()
-  eventTypeId: string; // Cal.com event type ID
+  eventTypeId: number; // Cal.com event type ID
+
+  @Column({ nullable: true })
+  eventTypeTitle: string; // Cal.com event type title
+
+  @Column({ nullable: true })
+  eventTypeSlug: string; // Cal.com event type slug
 
   @Column()
   title: string;
@@ -30,6 +39,9 @@ export class Booking {
   @Column({ type: 'timestamp' })
   endTime: Date;
 
+  @Column({ nullable: true })
+  timeZone: string; // Booking timezone
+
   @Column({ type: 'int' })
   duration: number; // in minutes
 
@@ -42,6 +54,12 @@ export class Booking {
     name: string;
     timeZone: string;
   }>;
+
+  @Column({ type: 'jsonb', nullable: true })
+  attendeeEmails: string[]; // Extracted attendee emails
+
+  @Column({ type: 'jsonb', nullable: true })
+  attendeeNames: string[]; // Extracted attendee names
 
   @Column({ 
     type: 'enum', 
@@ -62,12 +80,15 @@ export class Booking {
   @Column({ type: 'text', nullable: true })
   redactedDescription: string; // For external calendar events
 
+  @Column({ type: 'jsonb', nullable: true })
+  metadata: Record<string, any>; // Additional booking metadata
+
   @Column({ 
     type: 'enum', 
-    enum: ['pending', 'confirmed', 'cancelled', 'completed'],
+    enum: ['pending', 'confirmed', 'cancelled', 'completed', 'ACCEPTED', 'PENDING', 'CANCELLED', 'REJECTED'],
     default: 'pending'
   })
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'ACCEPTED' | 'PENDING' | 'CANCELLED' | 'REJECTED';
 
   @CreateDateColumn()
   createdAt: Date;

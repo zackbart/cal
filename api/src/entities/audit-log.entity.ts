@@ -13,20 +13,19 @@ export class AuditLog {
   userId: string;
 
   @Column()
-  action: string; // e.g., 'decrypt_intake', 'view_secure_notes', 'access_summary'
+  action: string; // e.g., 'BOOKING_CREATED', 'BOOKING_UPDATED', 'decrypt_intake', 'view_secure_notes', 'access_summary'
 
   @Column({ type: 'text', nullable: true })
   description: string;
 
+  @Column({ nullable: true })
+  entityType: string; // e.g., 'booking', 'user', 'form'
+
+  @Column({ nullable: true })
+  entityId: string; // ID of the entity being acted upon
+
   @Column({ type: 'jsonb', nullable: true })
-  metadata: {
-    ipAddress?: string;
-    userAgent?: string;
-    resourceType?: string;
-    resourceId?: string;
-    success: boolean;
-    errorMessage?: string;
-  };
+  metadata: Record<string, any>; // Flexible metadata structure
 
   @CreateDateColumn()
   createdAt: Date;

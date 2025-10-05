@@ -9,7 +9,7 @@ export class User {
   id: string;
 
   @Column({ unique: true })
-  calUserId: string; // Cal.com user ID
+  calUserId: number; // Cal.com user ID
 
   @Column()
   username: string; // Cal.com username
