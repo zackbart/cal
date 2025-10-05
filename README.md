@@ -1,4 +1,4 @@
-# ChurchHub Scheduler
+# ChurchHub Cal
 
 A ministry-focused scheduling tool that combines Cal.com's platform with custom pastoral care features.
 

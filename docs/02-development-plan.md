@@ -8,12 +8,17 @@
 - Configure Cal Platform OAuth + webhooks.
 - Provision Neon + Railway.
 
-## Phase 1 – Cal Atoms Integration
-- /book/[username] with <Booker/>.
+## Phase 1 – Cal Atoms Integration ✅ COMPLETED
+- /book/[username] with Cal.com embed integration.
 - Mint managed-user tokens via API route.
 - Handle webhooks booking.created|updated.
+- Modern booking page design with larger interface.
 
-## Phase 2 – Questionnaires & Sensitive Mode
+## Phase 2 – Pre-Booking Questionnaires & Sensitive Mode
+- **Option 1 (Recommended)**: Pre-booking questionnaire flow
+  - Custom questionnaire form appears before time selection
+  - User fills questionnaire → Cal.com embed loads with pre-filled data
+  - Full control over questionnaire design and validation
 - Questionnaire builder (shadcn + RHF + Zod).
 - Encrypt intake; support anonymity & redaction.
 - Secure Notes page.

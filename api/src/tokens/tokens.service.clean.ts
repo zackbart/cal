@@ -31,26 +31,26 @@ export class TokensService {
   }
 
   async getManagedUserToken(username: string): Promise<{ accessToken: string; expiresAt: string }> {
-    this.logger.log('Looking up existing managed user', { username });
+    this.logger.log('Looking up existing Cal.com user', { username });
     
     try {
-      // 1. Look up existing managed user
-      const existingUser = await this.getExistingManagedUser(username);
+      // 1. Look up existing user in Cal.com platform
+      const existingUser = await this.getExistingCalUser(username);
       
       if (!existingUser) {
         throw new NotFoundException(`User '${username}' not found. Please check the username or contact support.`);
       }
       
-      // 2. Generate a simple token for the existing managed user
+      // 2. Generate a simple token for the existing user
       const tokenResponse = {
-        access_token: `managed_user_token_${existingUser.id}_${Date.now()}`,
+        access_token: `user_token_${existingUser.id}_${Date.now()}`,
         expires_in: 3600 // 1 hour
       };
       
       // 3. Return the access token with expiration
       const expiresAt = new Date(Date.now() + (tokenResponse.expires_in * 1000)).toISOString();
       
-      this.logger.log('Successfully generated managed user token', { 
+      this.logger.log('Successfully generated user token', { 
         username, 
         userId: existingUser.id,
         expiresAt 
@@ -62,7 +62,7 @@ export class TokensService {
       };
       
     } catch (error) {
-      this.logger.error('Failed to generate managed user token', { 
+      this.logger.error('Failed to generate user token', { 
         username, 
         error: error.message 
       });
@@ -70,74 +70,37 @@ export class TokensService {
     }
   }
 
-  private async getExistingManagedUser(username: string): Promise<any> {
+  private async getExistingCalUser(username: string): Promise<any> {
     try {
-      this.logger.log('Looking up managed user', { username, calApiUrl: this.calApiUrl });
+      // Get client access token first
+      const clientToken = await this.getClientAccessToken();
       
-      // Look up managed user by username using direct API call
-      const response = await fetch(`${this.calApiUrl}/v2/oauth-clients/${this.calClientId}/users`, {
+      // Look up user by username in Cal.com platform
+      const response = await fetch(`${this.calApiUrl}/v2/users/username/${username}`, {
         method: 'GET',
         headers: {
-          'x-cal-client-id': this.calClientId,
-          'x-cal-secret-key': this.calClientSecret,
+          'Authorization': `Bearer ${clientToken}`,
           'Content-Type': 'application/json',
         },
       });
 
-      this.logger.log('API response status', { status: response.status, statusText: response.statusText });
-
       if (!response.ok) {
-        const errorText = await response.text();
-        this.logger.error('Failed to fetch managed users', { 
-          status: response.status, 
-          statusText: response.statusText,
-          errorText
-        });
-        throw new Error(`Failed to fetch managed users: ${response.status} ${response.statusText}`);
+        if (response.status === 404) {
+          return null; // User not found
+        }
+        throw new Error(`Failed to fetch user: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
-      const users = data.data || [];
-      
-      this.logger.log('Fetched managed users', { 
-        count: users.length, 
-        usernames: users.map((u: any) => u.username),
-        emails: users.map((u: any) => u.email)
-      });
-      
-      // Find user by username in the list - handle both exact match and partial match
-      const user = users.find((u: any) => {
-        // Exact username match
-        if (u.username === username) return true;
-        
-        // Check if the managed user username contains the requested username
-        // e.g., "zack" should match "zack-cmgdzlviq0003qd1r1ljlj91a-example-com"
-        if (u.username && u.username.startsWith(username + '-')) return true;
-        
-        // Check email for username
-        if (u.email && u.email.includes(username)) return true;
-        
-        return false;
-      });
-      
-      if (user) {
-        this.logger.log('Found existing managed user', { 
-          username, 
-          userId: user.id,
-          email: user.email,
-          actualUsername: user.username
-        });
-        return user;
-      }
-      
-      this.logger.log('User not found in managed users list', { 
+      const userData = await response.json();
+      this.logger.log('Found existing Cal.com user', { 
         username, 
-        availableUsernames: users.map((u: any) => u.username),
-        availableEmails: users.map((u: any) => u.email)
+        userId: userData.id,
+        email: userData.email 
       });
-      return null; // User not found
+      
+      return userData;
     } catch (error) {
-      this.logger.error('Error looking up existing managed user', { 
+      this.logger.error('Error looking up existing Cal.com user', { 
         username, 
         error: error.message 
       });

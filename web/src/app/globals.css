@@ -150,3 +150,15 @@
   outline: 2px solid hsl(var(--ring));
   outline-offset: 2px;
 }
+
+/* Hide Cal.com branding in booking interface */
+iframe[name*="cal-embed"] {
+  border: none !important;
+}
+
+/* Hide Cal.com branding elements */
+iframe[name*="cal-embed"] + div,
+iframe[name*="cal-embed"] ~ div[style*="position: absolute"],
+iframe[name*="cal-embed"] ~ div[style*="bottom: 0"] {
+  display: none !important;
+}

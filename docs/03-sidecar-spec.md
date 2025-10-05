@@ -7,10 +7,17 @@
 
 ## Endpoints
 - POST /webhooks/cal/booking.created
+- POST /webhooks/cal/booking.updated
 - POST /forms, /forms/:id/respond
 - GET /bookings/:id/secure-notes
 - POST /tokens/cal/managed-user
 - GET /health
+
+## Pre-Booking Questionnaire Flow
+1. **Questionnaire Storage**: Store questionnaire responses before booking
+2. **Data Association**: Link questionnaire data to booking via webhook
+3. **Encryption**: Encrypt sensitive questionnaire responses
+4. **Validation**: Validate questionnaire data before allowing booking
 
 ## Workers (optional)
 - jit_validate_slot – verify conflicts.
