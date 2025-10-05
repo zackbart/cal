@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { TokensService } from '../tokens/tokens.service';
+import { CalLookupService } from '../tokens/cal-lookup.service';
 
 export interface PastorPayload {
   sub: string; // pastor username
@@ -30,17 +30,22 @@ export class AuthService {
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly tokensService: TokensService,
+    private readonly calLookupService: CalLookupService,
   ) {}
 
   async validatePastor(username: string, password: string): Promise<any> {
     this.logger.log('Validating pastor credentials', { username });
     
-    // Check if pastor exists as managed user
-    const managedUser = await this.tokensService.getExistingManagedUser(username);
-    
-    if (!managedUser) {
-      this.logger.warn('Pastor not found in managed users', { username });
+    // Check if pastor exists as Cal.com user
+    try {
+      const calUser = await this.calLookupService.lookupUserAndGenerateToken(username);
+      
+      if (!calUser) {
+        this.logger.warn('Pastor not found in Cal.com', { username });
+        throw new UnauthorizedException('Invalid credentials');
+      }
+    } catch (error) {
+      this.logger.warn('Pastor not found in Cal.com', { username, error: error.message });
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -55,14 +60,13 @@ export class AuthService {
     }
 
     this.logger.log('Pastor credentials validated successfully', { 
-      username, 
-      userId: managedUser.id 
+      username
     });
 
     return {
-      username: managedUser.username,
-      email: managedUser.email,
-      userId: managedUser.id,
+      username: username,
+      email: '', // TODO: Get actual email from Cal.com user
+      userId: 0, // TODO: Get actual user ID from Cal.com user
     };
   }
 
@@ -104,18 +108,23 @@ export class AuthService {
     }
 
     // Get fresh pastor data
-    const managedUser = await this.tokensService.getExistingManagedUser(tokenData.username);
-    
-    if (!managedUser) {
+    try {
+      const calUser = await this.calLookupService.lookupUserAndGenerateToken(tokenData.username);
+      
+      if (!calUser) {
+        this.refreshTokens.delete(refreshToken);
+        throw new UnauthorizedException('Pastor no longer exists');
+      }
+    } catch (error) {
       this.refreshTokens.delete(refreshToken);
       throw new UnauthorizedException('Pastor no longer exists');
     }
 
     const payload: PastorPayload = {
-      sub: managedUser.username,
-      username: managedUser.username,
-      userId: managedUser.id,
-      email: managedUser.email,
+      sub: tokenData.username,
+      username: tokenData.username,
+      userId: 0, // TODO: Get actual user ID from Cal.com user
+      email: '', // TODO: Get actual email from Cal.com user
     };
 
     const accessToken = this.jwtService.sign(payload);

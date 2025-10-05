@@ -9,8 +9,8 @@ interface CalUser {
 }
 
 @Injectable()
-export class TokensService {
-  private readonly logger = new Logger(TokensService.name);
+export class CalLookupService {
+  private readonly logger = new Logger(CalLookupService.name);
   private readonly calApiUrl: string;
   private readonly calClientId: string;
   private readonly calClientSecret: string;
@@ -22,35 +22,38 @@ export class TokensService {
     this.calClientId = this.configService.get<string>('CAL_CLIENT_ID');
     this.calClientSecret = this.configService.get<string>('CAL_CLIENT_SECRET');
     
-    this.logger.log('TokensService initialized', {
+    this.logger.log('CalLookupService initialized', {
       calApiUrl: this.calApiUrl,
       hasClientId: !!this.calClientId,
       hasClientSecret: !!this.calClientSecret,
-      clientIdLength: this.calClientId?.length || 0
     });
   }
 
-  async getManagedUserToken(username: string): Promise<{ accessToken: string; expiresAt: string }> {
-    this.logger.log('Looking up existing managed user', { username });
+  /**
+   * Look up an existing Cal.com user by username and generate a token
+   * This is a lookup-only service - no user creation or management
+   */
+  async lookupUserAndGenerateToken(username: string): Promise<{ accessToken: string; expiresAt: string; user: CalUser }> {
+    this.logger.log('Looking up Cal.com user', { username });
     
     try {
-      // 1. Look up existing managed user
-      const existingUser = await this.getExistingManagedUser(username);
+      // 1. Look up existing user in Cal.com platform
+      const existingUser = await this.findCalUser(username);
       
       if (!existingUser) {
-        throw new NotFoundException(`User '${username}' not found. Please check the username or contact support.`);
+        throw new NotFoundException(`Cal.com user '${username}' not found. User must be created manually in Cal.com first.`);
       }
       
-      // 2. Generate a simple token for the existing managed user
+      // 2. Generate a simple token for the existing user
       const tokenResponse = {
-        access_token: `managed_user_token_${existingUser.id}_${Date.now()}`,
+        access_token: `user_token_${existingUser.id}_${Date.now()}`,
         expires_in: 3600 // 1 hour
       };
       
       // 3. Return the access token with expiration
       const expiresAt = new Date(Date.now() + (tokenResponse.expires_in * 1000)).toISOString();
       
-      this.logger.log('Successfully generated managed user token', { 
+      this.logger.log('Successfully generated token for Cal.com user', { 
         username, 
         userId: existingUser.id,
         expiresAt 
@@ -58,11 +61,12 @@ export class TokensService {
       
       return {
         accessToken: tokenResponse.access_token,
-        expiresAt
+        expiresAt,
+        user: existingUser
       };
       
     } catch (error) {
-      this.logger.error('Failed to generate managed user token', { 
+      this.logger.error('Failed to lookup Cal.com user', { 
         username, 
         error: error.message 
       });
@@ -70,9 +74,56 @@ export class TokensService {
     }
   }
 
-  private async getExistingManagedUser(username: string): Promise<any> {
+  /**
+   * Find an existing Cal.com user by username
+   * Supports both exact match and partial match for managed users
+   */
+  private async findCalUser(username: string): Promise<CalUser | null> {
     try {
-      this.logger.log('Looking up managed user', { username, calApiUrl: this.calApiUrl });
+      // Get client access token first
+      const clientToken = await this.getClientAccessToken();
+      
+      // Try to find user by username in Cal.com platform
+      const response = await fetch(`${this.calApiUrl}/v2/users/username/${username}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${clientToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        this.logger.log('Found Cal.com user by username', { 
+          username, 
+          userId: userData.id,
+          email: userData.email 
+        });
+        return userData;
+      }
+
+      // If not found by username, try managed users lookup
+      if (response.status === 404) {
+        return await this.findManagedUser(username, clientToken);
+      }
+
+      throw new Error(`Failed to fetch user: ${response.status} ${response.statusText}`);
+      
+    } catch (error) {
+      this.logger.error('Error looking up Cal.com user', { 
+        username, 
+        error: error.message 
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Look up managed users as fallback
+   */
+  private async findManagedUser(username: string, clientToken: string): Promise<CalUser | null> {
+    try {
+      this.logger.log('Looking up managed users as fallback', { username });
       
       // Look up managed user by username using direct API call
       const response = await fetch(`${this.calApiUrl}/v2/oauth-clients/${this.calClientId}/users`, {
@@ -84,16 +135,12 @@ export class TokensService {
         },
       });
 
-      this.logger.log('API response status', { status: response.status, statusText: response.statusText });
-
       if (!response.ok) {
-        const errorText = await response.text();
-        this.logger.error('Failed to fetch managed users', { 
+        this.logger.warn('Failed to fetch managed users', { 
           status: response.status, 
-          statusText: response.statusText,
-          errorText
+          statusText: response.statusText
         });
-        throw new Error(`Failed to fetch managed users: ${response.status} ${response.statusText}`);
+        return null;
       }
 
       const data = await response.json();
@@ -101,8 +148,7 @@ export class TokensService {
       
       this.logger.log('Fetched managed users', { 
         count: users.length, 
-        usernames: users.map((u: any) => u.username),
-        emails: users.map((u: any) => u.email)
+        usernames: users.map((u: any) => u.username)
       });
       
       // Find user by username in the list - handle both exact match and partial match
@@ -121,7 +167,7 @@ export class TokensService {
       });
       
       if (user) {
-        this.logger.log('Found existing managed user', { 
+        this.logger.log('Found managed user', { 
           username, 
           userId: user.id,
           email: user.email,
@@ -132,12 +178,12 @@ export class TokensService {
       
       this.logger.log('User not found in managed users list', { 
         username, 
-        availableUsernames: users.map((u: any) => u.username),
-        availableEmails: users.map((u: any) => u.email)
+        availableUsernames: users.map((u: any) => u.username)
       });
-      return null; // User not found
+      return null;
+      
     } catch (error) {
-      this.logger.error('Error looking up existing managed user', { 
+      this.logger.error('Error looking up managed user', { 
         username, 
         error: error.message 
       });
@@ -145,6 +191,9 @@ export class TokensService {
     }
   }
 
+  /**
+   * Get client access token for Cal.com API
+   */
   private async getClientAccessToken(): Promise<string> {
     try {
       const response = await fetch(`${this.calApiUrl}/v2/oauth/token`, {

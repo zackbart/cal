@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { StackProvider, StackTheme } from "@stackframe/stack";
 import "./globals.css";
 
 const inter = Inter({
@@ -27,7 +28,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <StackProvider>
+            <StackTheme>
+              {children}
+            </StackTheme>
+          </StackProvider>
         </ThemeProvider>
       </body>
     </html>

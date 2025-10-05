@@ -29,12 +29,12 @@ export default function BookingPage({ params }: BookingPageProps) {
         setUsername(params.username);
         
         setLoading(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/tokens/cal/managed-user`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/stack/cal-token`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ username: params.username }),
+          body: JSON.stringify({ stackUserId: params.username }),
         });
 
         if (!response.ok) {

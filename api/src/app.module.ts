@@ -3,9 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HealthModule } from './health/health.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
-import { TokensModule } from './tokens/tokens.module';
 import { FormsModule } from './forms/forms.module';
 import { BookingsModule } from './bookings/bookings.module';
+import { AuthModule } from './auth/auth.module';
 import * as entities from './entities';
 
 @Module({
@@ -28,9 +28,9 @@ import * as entities from './entities';
     ] : []),
     HealthModule,
     WebhooksModule,
-    TokensModule,
     FormsModule,
     BookingsModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
