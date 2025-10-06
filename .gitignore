@@ -1,11 +1,27 @@
-# Root level gitignore for ChurchHub project
+# Root level gitignore for ChurchHub Cal project
 
-# Environment files
+# Environment files (CRITICAL - Never commit secrets!)
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.staging
+.env.production
+
+# ChurchHub Cal specific environment files (CRITICAL - Never commit actual secrets!)
+api/.env
+worker/.env
+web/.env
+web/.env.local
+
+# BUT DO commit the template files in docs/ (these are safe examples)
+# docs/api.env - ✅ COMMIT (template file)
+# docs/worker.env - ✅ COMMIT (template file)  
+# docs/frontend.env - ✅ COMMIT (template file)
+
+# Explicitly include docs environment templates
+!docs/*.env
 
 # Logs
 logs
@@ -112,3 +128,40 @@ dist/
 
 # Docker
 .dockerignore
+
+# ChurchHub Cal specific
+# Sensitive data and backups
+*.backup
+*.bak
+sensitive-data/
+encrypted-data/
+
+# AI and ML models (if any)
+*.model
+*.pkl
+*.h5
+
+# Cal.com integration cache
+.cal-cache/
+cal-tokens/
+
+# Database dumps
+*.sql
+*.dump
+database-backups/
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+ssl/
+
+# Monitoring and analytics
+.sentryclirc
+monitoring/
+
+# Temporary ChurchHub Cal files
+churchhub-temp/
+temp-uploads/

@@ -1,0 +1,6 @@
+---
+alwaysApply: true
+---
+
+- Always strictly adhere to the documentation listed in the docs directory
+- Create "as-built" documentation in the devlog directory

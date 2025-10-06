@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { ThemeProvider } from "next-themes";
-import { StackProvider, StackTheme } from "@stackframe/stack";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { queryClient } from "@/lib/query-client";
 import "./globals.css";
 
 const inter = Inter({
@@ -10,8 +11,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ChurchHub Scheduler",
+  title: "ChurchHub Cal Scheduler",
   description: "Ministry-focused scheduling tool for pastors",
+  keywords: ["pastor", "scheduling", "ministry", "church", "booking"],
+  authors: [{ name: "ChurchHub Cal" }],
+  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({
@@ -22,18 +26,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <StackProvider>
-            <StackTheme>
-              {children}
-            </StackTheme>
-          </StackProvider>
-        </ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          {children}
+          <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
       </body>
     </html>
   );

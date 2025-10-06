@@ -4,7 +4,7 @@ A ministry-focused scheduling tool that combines Cal.com's platform with custom 
 
 ## Overview
 
-ChurchHub Scheduler eliminates back-and-forth coordination between pastors and congregants while providing context-aware scheduling with built-in privacy and security features.
+ChurchHub Cal eliminates back-and-forth coordination between pastors and congregants while providing context-aware scheduling with built-in privacy and security features.
 
 ### Key Features
 
@@ -144,7 +144,7 @@ NODE_ENV=development
 
 ### Phase 0: Setup ✅
 - [x] Repository structure
-- [x] Next.js frontend with ChurchHub design system
+- [x] Next.js frontend with ChurchHub Cal design system
 - [x] Nest.js API with health checks
 - [x] BullMQ workers for background jobs
 - [x] Database schema and entities

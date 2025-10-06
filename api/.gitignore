@@ -36,12 +36,15 @@ lerna-debug.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# dotenv environment variable files
+# dotenv environment variable files (CRITICAL - Never commit secrets!)
 .env
 .env.development.local
 .env.test.local
 .env.production.local
 .env.local
+.env.development
+.env.production
+.env.staging
 
 # temp
 /tmp
@@ -138,3 +141,35 @@ Thumbs.db
 
 # Railway
 .railway/
+
+# ChurchHub Cal API specific
+# Cal.com integration cache
+.cal-cache/
+cal-tokens/
+
+# Database migrations (if auto-generated)
+migrations/*.sql
+migration-backups/
+
+# API documentation cache
+docs-cache/
+api-docs-cache/
+
+# Uploads and file storage
+uploads/
+file-storage/
+temp-files/
+
+# Monitoring and analytics
+.sentryclirc
+monitoring/
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+ssl/
+
+# Backup files
+*.backup
+*.bak

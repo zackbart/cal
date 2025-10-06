@@ -1,7 +1,7 @@
 {
-  "name": "churchhub-worker",
+  "name": "churchhub-cal-worker",
   "version": "1.0.0",
-  "description": "ChurchHub background workers for reminders and AI summaries",
+  "description": "ChurchHub Cal background workers for reminders and AI summaries",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -10,7 +10,7 @@
     "dev": "nodemon --exec ts-node src/index.ts"
   },
   "keywords": ["church", "scheduling", "workers", "background-jobs"],
-  "author": "ChurchHub",
+  "author": "ChurchHub Cal",
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {

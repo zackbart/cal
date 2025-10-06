@@ -1,208 +1,205 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { notFound } from "next/navigation";
-import Cal from "@calcom/embed-react";
-import { MultiStepQuestionnaire, QuestionnaireData } from "@/components/questionnaire/MultiStepQuestionnaire";
-import { WelcomePage } from "@/components/questionnaire/WelcomePage";
+import { useParams } from "next/navigation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CalProvider } from "@/components/booking/CalProvider";
+import { ChurchHubBooker } from "@/components/booking/ChurchHubBooker";
+import { useCalApi } from "@/lib/cal-api";
+import { CalUser, CalEventType } from "@/lib/cal-api";
+import { Calendar, MapPin, Clock, User } from "lucide-react";
 
-interface BookingPageProps {
-  params: {
-    username: string;
-  };
-}
-
-export default function BookingPage({ params }: BookingPageProps) {
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function PublicBookingPage() {
+  const params = useParams();
+  const username = params.username as string;
+  const [pastor, setPastor] = useState<CalUser | null>(null);
+  const [eventTypes, setEventTypes] = useState<CalEventType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [username, setUsername] = useState<string | null>(null);
-  const [showWelcome, setShowWelcome] = useState(true);
-  const [questionnaireStarted, setQuestionnaireStarted] = useState(false);
-  const [questionnaireCompleted, setQuestionnaireCompleted] = useState(false);
-  const [questionnaireData, setQuestionnaireData] = useState<QuestionnaireData | null>(null);
+  const calApi = useCalApi();
 
   useEffect(() => {
-    async function initializePage() {
+    const fetchPastorData = async () => {
       try {
-        // Direct access to params in Next.js 14
-        setUsername(params.username);
-        
-        setLoading(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/stack/cal-token`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ stackUserId: params.username }),
-        });
+        setIsLoading(true);
+        setError(null);
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`API Error: ${response.status} - ${errorText}`);
+        // Fetch pastor profile from ChurchHub API
+        const pastorResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pastors/${username}`);
+        
+        if (!pastorResponse.ok) {
+          throw new Error("Pastor not found");
         }
 
-        const data = await response.json();
-        setAccessToken(data.accessToken);
-      } catch (err) {
-        console.error('Error fetching access token:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        const pastorData = await pastorResponse.json();
+        setPastor(pastorData);
+
+        // Fetch Cal.com user data
+        if (pastorData.calUserId) {
+          const calUser = await calApi.getUser(pastorData.calUserId);
+          setPastor(prev => prev ? { ...prev, ...calUser } : calUser);
+
+          // Fetch event types
+          const eventTypesData = await calApi.getEventTypes(pastorData.calUserId);
+          setEventTypes(eventTypesData);
+        }
+      } catch (error) {
+        console.error("Error fetching pastor data:", error);
+        setError(error instanceof Error ? error.message : "Failed to load pastor profile");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
+    };
+
+    if (username) {
+      fetchPastorData();
     }
+  }, [username, calApi]);
 
-    initializePage();
-  }, [params]);
-
-  const handleStartQuestionnaire = () => {
-    setShowWelcome(false);
-    setQuestionnaireStarted(true);
-  };
-
-  const handleQuestionnaireComplete = async (data: QuestionnaireData) => {
-    try {
-      // Store questionnaire data
-      setQuestionnaireData(data);
-      setQuestionnaireCompleted(true);
-      
-      // TODO: Send questionnaire data to API for storage
-      console.log('Questionnaire completed:', data);
-    } catch (error) {
-      console.error('Error storing questionnaire data:', error);
-      setError('Failed to store questionnaire data');
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-lg mb-6">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 dark:border-slate-600 border-t-slate-900 dark:border-t-white"></div>
-          </div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Loading booking interface</h2>
-          <p className="text-slate-600 dark:text-slate-300">Please wait while we prepare your scheduling options...</p>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent mx-auto mb-4" />
+          <h1 className="text-xl font-semibold mb-2">Loading Pastor Profile</h1>
+          <p className="text-fg-muted">Please wait while we load the booking information...</p>
         </div>
       </div>
     );
   }
 
-  if (error || !accessToken) {
+  if (error || !pastor) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-4">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-lg mb-6">
-            <span className="text-2xl">⚠️</span>
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Booking not available</h1>
-          <p className="text-slate-600 dark:text-slate-300 mb-6">
-            {error || 'Unable to load booking interface for this user.'}
-          </p>
-          <div className="space-y-3">
-            <button 
-              onClick={() => window.location.reload()}
-              className="w-full inline-flex items-center justify-center px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors font-medium"
-            >
-              Try again
-            </button>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-danger">Pastor Not Found</CardTitle>
+            <CardDescription>
+              The pastor you're looking for doesn't exist or isn't available for booking.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-sm text-fg-muted mb-4">
+              {error || "This pastor profile could not be found."}
+            </p>
             <a 
               href="/" 
-              className="w-full inline-flex items-center justify-center px-6 py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium"
+              className="inline-flex items-center px-4 py-2 bg-brand text-brand-foreground rounded-md hover:opacity-95"
             >
-              Return home
+              Return to ChurchHub
             </a>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     );
-  }
-
-  // Show welcome page first
-  if (showWelcome) {
-    return <WelcomePage username={username || ''} onStart={handleStartQuestionnaire} />;
-  }
-
-  // Show questionnaire if started but not completed
-  if (questionnaireStarted && !questionnaireCompleted) {
-    return <MultiStepQuestionnaire username={username || ''} onComplete={handleQuestionnaireComplete} />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="container mx-auto max-w-6xl px-4 py-8">
-        {/* Header Section */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-lg mb-4">
-            <span className="text-2xl">📅</span>
-          </div>
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
-            Schedule with {username}
-          </h1>
-          <p className="text-lg text-slate-600 dark:text-slate-300">
-            Choose a time that works for you
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <header className="w-full border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <a href="/" className="font-semibold text-xl">
+            ChurchHub Cal
+          </a>
+          <nav className="flex items-center gap-3">
+            <a 
+              href="/" 
+              className="text-sm text-fg-muted hover:text-fg"
+            >
+              Back to Home
+            </a>
+          </nav>
         </div>
+      </header>
 
-        {/* Main Booking Container */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-          {/* Cal.com Booking Interface */}
-          <div className="w-full">
-            {accessToken && accessToken.startsWith('eyJ') ? (
-              <div className="w-full">
-                <Cal
-                  calLink={`${username}`}
-                  config={{
-                    name: username || 'User',
-                    email: `${username || 'user'}@example.com`,
-                    notes: `Reason: ${questionnaireData?.discussionTopic || 'Not specified'}\nSensitivity: ${questionnaireData?.sensitivity || 'Not specified'}\nAttendees: ${questionnaireData?.attendees || 'Just me'}\nLocation: ${questionnaireData?.location === 'Other (specify below)' ? questionnaireData?.customLocation : questionnaireData?.location || 'Not specified'}\nPreparation: ${questionnaireData?.preparation || 'None specified'}`,
-                    // Pre-select location based on questionnaire preference
-                    ...(questionnaireData?.location && {
-                      location: questionnaireData.location === 'Other (specify below)' 
-                        ? questionnaireData.customLocation 
-                        : questionnaireData.location
-                    })
-                  }}
-                  style={{
-                    width: "100%",
-                    height: "800px",
-                    overflow: "scroll",
-                    border: "none",
-                    borderRadius: "0"
-                  }}
-                />
-              </div>
-            ) : (
-              <div className="text-center p-12">
-                <div className="mb-8">
-                  <div className="w-20 h-20 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <span className="text-3xl">📅</span>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          {/* Pastor Profile */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 bg-brand rounded-full flex items-center justify-center">
+                    <User className="h-8 w-8 text-brand-foreground" />
                   </div>
-                  <h3 className="text-2xl font-semibold text-slate-900 dark:text-white mb-3">
-                    Booking interface unavailable
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-300 mb-6 max-w-md mx-auto">
-                    Unable to load the booking interface at this time. Please try again later or contact support.
-                  </p>
-                  <button 
-                    onClick={() => window.location.reload()}
-                    className="inline-flex items-center px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors font-medium"
-                  >
-                    Try again
-                  </button>
+                  <div>
+                    <CardTitle className="text-xl">{pastor.name}</CardTitle>
+                    <CardDescription className="text-base">
+                      {pastor.bio || "Pastor"}
+                    </CardDescription>
+                  </div>
                 </div>
-              </div>
-            )}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {pastor.bio && (
+                  <div>
+                    <h4 className="font-medium text-fg mb-2">About</h4>
+                    <p className="text-sm text-fg-muted">{pastor.bio}</p>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2 text-sm text-fg-muted">
+                    <Calendar className="h-4 w-4" />
+                    <span>Available for appointments</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm text-fg-muted">
+                    <Clock className="h-4 w-4" />
+                    <span>Time zone: {pastor.timeZone}</span>
+                  </div>
+                </div>
+
+                {eventTypes.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-fg mb-2">Available Services</h4>
+                    <div className="space-y-2">
+                      {eventTypes.map((eventType) => (
+                        <div key={eventType.id} className="text-sm">
+                          <div className="font-medium text-fg">{eventType.title}</div>
+                          <div className="text-fg-muted">
+                            {eventType.length} minutes
+                            {eventType.description && ` • ${eventType.description}`}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Booking Widget */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Schedule an Appointment</CardTitle>
+                <CardDescription>
+                  Choose a time that works for you to meet with {pastor.name}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CalProvider>
+                  <ChurchHubBooker 
+                    username={pastor.username}
+                    hideBranding={true}
+                  />
+                </CalProvider>
+              </CardContent>
+            </Card>
           </div>
         </div>
+      </main>
 
-        {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Powered by <span className="font-medium text-slate-700 dark:text-slate-300">ChurchHub</span>
-          </p>
+      {/* Footer */}
+      <footer className="border-t bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 mt-16">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="text-center text-sm text-fg-muted">
+                <p>&copy; 2025 ChurchHub Cal. Built with care for ministry leaders.</p>
+          </div>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }

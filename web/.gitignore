@@ -27,9 +27,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
+# local env files (CRITICAL - Never commit secrets!)
 .env*.local
 .env
+.env.development
+.env.production
+.env.staging
 
 # vercel
 .vercel
@@ -44,3 +47,24 @@ next-env.d.ts
 
 # OS
 Thumbs.db
+
+# ChurchHub Cal Web specific
+# Cal.com integration cache
+.cal-cache/
+cal-tokens/
+
+# Uploads and temporary files
+uploads/
+temp-uploads/
+public/uploads/
+
+# Build artifacts
+.next/cache/
+.next/static/
+
+# PWA files
+sw.js
+workbox-*.js
+
+# Analytics and monitoring
+.sentryclirc

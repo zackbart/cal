@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+---
+
+- Always confirm approval before implementing changes
+- Do not run dev servers, ask to have the user start them
+- Never add secrets to any files or docs, use best security practices

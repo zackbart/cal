@@ -1,118 +1,222 @@
-import { cookies } from 'next/headers';
+import { create } from "zustand";
+import { persist } from "zustand-persist";
 
-export interface Pastor {
-  username: string;
+export interface User {
+  id: string;
   email: string;
-  userId: number;
+  name: string;
+  churchName: string;
+  role: "pastor" | "admin";
+  calUserId: string;
+  calUsername: string;
+  schedulingLink: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  pastor: Pastor;
+export interface AuthState {
+  user: User | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
 }
 
-export class AuthService {
-  private static readonly API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+export interface AuthActions {
+  setUser: (user: User) => void;
+  setTokens: (accessToken: string, refreshToken: string) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  login: (user: User, accessToken: string, refreshToken: string) => void;
+  logout: () => void;
+  clearError: () => void;
+}
 
-  static async login(username: string, password: string): Promise<AuthResponse> {
-    const response = await fetch(`${this.API_BASE}/auth/login`, {
-      method: 'POST',
+export const useAuthStore = create<AuthState & AuthActions>()(
+  persist(
+    (set, get) => ({
+      // State
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+
+      // Actions
+      setUser: (user) => set({ user, isAuthenticated: true }),
+      
+      setTokens: (accessToken, refreshToken) => 
+        set({ accessToken, refreshToken }),
+      
+      setLoading: (isLoading) => set({ isLoading }),
+      
+      setError: (error) => set({ error }),
+      
+      login: (user, accessToken, refreshToken) =>
+        set({
+          user,
+          accessToken,
+          refreshToken,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        }),
+      
+      logout: () =>
+        set({
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          isAuthenticated: false,
+          isLoading: false,
+          error: null,
+        }),
+      
+      clearError: () => set({ error: null }),
+    }),
+    {
+      name: "churchhub-auth",
+      partialize: (state) => ({
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    }
+  )
+);
+
+// Auth API functions
+export const authApi = {
+  async signup(data: {
+    email: string;
+    name: string;
+    password: string;
+    churchName: string;
+    bio?: string;
+    schedulingUsername?: string;
+  }) {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/signup`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      credentials: 'include', // Include cookies
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify(data),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Login failed');
+      throw new Error(error.message || "Signup failed");
     }
 
     return response.json();
-  }
+  },
 
-  static async logout(): Promise<void> {
-    await fetch(`${this.API_BASE}/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-  }
-
-  static async refreshToken(): Promise<{ accessToken: string }> {
-    const response = await fetch(`${this.API_BASE}/auth/refresh`, {
-      method: 'POST',
+  async login(data: { email: string; password: string }) {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      credentials: 'include',
+      body: JSON.stringify(data),
     });
 
     if (!response.ok) {
-      throw new Error('Token refresh failed');
+      const error = await response.json();
+      throw new Error(error.message || "Login failed");
     }
 
     return response.json();
-  }
+  },
 
-  static async getCurrentPastor(): Promise<Pastor | null> {
-    try {
-      const response = await fetch(`${this.API_BASE}/auth/me`, {
-        credentials: 'include',
-      });
+  async refreshToken(refreshToken: string) {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/cal/refresh`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
 
-      if (!response.ok) {
-        return null;
-      }
-
-      const data = await response.json();
-      return {
-        username: data.username,
-        email: data.email,
-        userId: data.userId,
-      };
-    } catch (error) {
-      return null;
+    if (!response.ok) {
+      throw new Error("Token refresh failed");
     }
-  }
 
-  static async verifyToken(): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.API_BASE}/auth/verify`, {
-        credentials: 'include',
-      });
+    return response.json();
+  },
 
-      return response.ok;
-    } catch (error) {
-      return false;
-    }
-  }
-}
-
-// Server-side auth utilities
-export async function getServerSideAuth(): Promise<Pastor | null> {
-  try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('accessToken')?.value;
+  async logout() {
+    const { accessToken } = useAuthStore.getState();
     
-    if (!accessToken) {
-      return null;
+    if (accessToken) {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
     }
+  },
+};
 
-    const response = await fetch(`${AuthService.API_BASE}/auth/verify`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    return data.pastor;
-  } catch (error) {
-    return null;
-  }
-}
+// Auth hooks
+export const useAuth = () => {
+  const store = useAuthStore();
+  
+  return {
+    ...store,
+    login: async (email: string, password: string) => {
+      try {
+        store.setLoading(true);
+        store.clearError();
+        
+        const response = await authApi.login({ email, password });
+        store.login(response.user, response.accessToken, response.refreshToken);
+        
+        return response;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Login failed";
+        store.setError(errorMessage);
+        throw error;
+      } finally {
+        store.setLoading(false);
+      }
+    },
+    
+    signup: async (data: {
+      email: string;
+      name: string;
+      password: string;
+      churchName: string;
+      bio?: string;
+      schedulingUsername?: string;
+    }) => {
+      try {
+        store.setLoading(true);
+        store.clearError();
+        
+        const response = await authApi.signup(data);
+        store.login(response.user, response.accessToken, response.refreshToken);
+        
+        return response;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Signup failed";
+        store.setError(errorMessage);
+        throw error;
+      } finally {
+        store.setLoading(false);
+      }
+    },
+    
+    logout: async () => {
+      try {
+        await authApi.logout();
+      } finally {
+        store.logout();
+      }
+    },
+  };
+};

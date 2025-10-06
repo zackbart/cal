@@ -1,6 +1,5 @@
-import { Controller, Post, Body, Get, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { StackAuthService } from './stack-auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
 
 export class StackTokenRequestDto {
   stackUserId: string;
@@ -14,7 +13,6 @@ export class StackAuthController {
   async getCalTokenForStackUser(@Body() request: StackTokenRequestDto) {
     return this.stackAuthService.getCalTokenForStackUser(request.stackUserId);
   }
-
 
   @Get('validate/:stackUserId')
   async validateStackUser(@Param('stackUserId') stackUserId: string) {
