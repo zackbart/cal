@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 
 interface CalUser {
   id: number;
@@ -17,6 +18,7 @@ export class CalLookupService {
 
   constructor(
     private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
   ) {
     this.calApiUrl = this.configService.get<string>('CAL_API_URL', 'https://api.cal.com');
     this.calClientId = this.configService.get<string>('CAL_CLIENT_ID');
@@ -44,14 +46,19 @@ export class CalLookupService {
         throw new NotFoundException(`Cal.com user '${username}' not found. User must be created manually in Cal.com first.`);
       }
       
-      // 2. Generate a simple token for the existing user
-      const tokenResponse = {
-        access_token: `user_token_${existingUser.id}_${Date.now()}`,
-        expires_in: 3600 // 1 hour
+      // 2. Generate a proper JWT token for the existing user
+      const payload = { 
+        email: existingUser.email, 
+        sub: existingUser.id.toString(), 
+        role: 'user',
+        calUserId: existingUser.id,
+        username: existingUser.username
       };
       
-      // 3. Return the access token with expiration
-      const expiresAt = new Date(Date.now() + (tokenResponse.expires_in * 1000)).toISOString();
+      const accessToken = this.jwtService.sign(payload);
+      
+      // 3. Return the access token with expiration (JWT tokens have built-in expiration)
+      const expiresAt = new Date(Date.now() + (3600 * 1000)).toISOString(); // 1 hour
       
       this.logger.log('Successfully generated token for Cal.com user', { 
         username, 
@@ -60,7 +67,7 @@ export class CalLookupService {
       });
       
       return {
-        accessToken: tokenResponse.access_token,
+        accessToken,
         expiresAt,
         user: existingUser
       };
@@ -219,6 +226,91 @@ export class CalLookupService {
     } catch (error) {
       this.logger.error('Failed to get client access token', { error: error.message });
       throw error;
+    }
+  }
+
+  /**
+   * Get event types for a Cal.com user
+   */
+  async getEventTypes(calUserId: number): Promise<any[]> {
+    try {
+      const clientToken = await this.getClientAccessToken();
+      
+      const response = await fetch(`${this.calApiUrl}/v2/event-types?userId=${calUserId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${clientToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        this.logger.warn('Failed to fetch event types', { 
+          calUserId,
+          status: response.status, 
+          statusText: response.statusText
+        });
+        return [];
+      }
+
+      const data = await response.json();
+      return data.data || [];
+    } catch (error) {
+      this.logger.error('Error fetching event types', { 
+        calUserId, 
+        error: error.message 
+      });
+      return [];
+    }
+  }
+
+  /**
+   * Get availability for a Cal.com user
+   */
+  async getAvailability(
+    calUserId: number,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<any[]> {
+    try {
+      const clientToken = await this.getClientAccessToken();
+      
+      const params = new URLSearchParams({
+        userId: calUserId.toString(),
+      });
+      
+      if (startDate) {
+        params.append('start', startDate.toISOString());
+      }
+      if (endDate) {
+        params.append('end', endDate.toISOString());
+      }
+      
+      const response = await fetch(`${this.calApiUrl}/v2/availability?${params}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${clientToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        this.logger.warn('Failed to fetch availability', { 
+          calUserId,
+          status: response.status, 
+          statusText: response.statusText
+        });
+        return [];
+      }
+
+      const data = await response.json();
+      return data.data || [];
+    } catch (error) {
+      this.logger.error('Error fetching availability', { 
+        calUserId, 
+        error: error.message 
+      });
+      return [];
     }
   }
 }

@@ -1,8 +1,8 @@
 # ChurchHub Development Plan - As-Built Documentation
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** 2025-01-27  
-**Status:** Phase 1.1 Complete, Phase 1.2 In Progress  
+**Status:** Phase 3 Complete, JWT Authentication Fixed  
 **Last Updated:** 2025-01-27
 
 ## Overview
@@ -94,10 +94,10 @@ web/
 
 ---
 
-### 1.2 Authentication Foundation 🔄 IN PROGRESS
+### 1.2 Authentication Foundation ✅ COMPLETED
 
-**Status:** 🔄 IN PROGRESS  
-**Started:** 2025-01-27  
+**Status:** ✅ COMPLETED  
+**Completion Date:** 2025-01-27  
 **Dependencies:** 1.1 ✅
 
 #### ✅ Completed Tasks:
@@ -108,16 +108,20 @@ web/
 - [x] Implement protected route wrapper
 - [x] Create login/logout functionality
 - [x] Set up session management
-
-#### 🔄 In Progress Tasks:
-- [ ] Implement Cal.com primary authentication (backend integration needed)
-- [ ] Set up JWT token handling (backend integration needed)
+- [x] Implement Cal.com primary authentication (backend integration)
+- [x] Set up JWT token handling (backend integration)
+- [x] Fix JWT token expiration (1-hour tokens working)
+- [x] Implement admin authentication system
+- [x] Create admin user management interface
 
 #### ✅ Deliverables:
 - [x] ChurchHub signup and login forms
 - [x] Protected routes functional
 - [x] User session management
 - [x] Authentication state management
+- [x] JWT authentication system (1-hour tokens)
+- [x] Admin authentication and user management
+- [x] Regular user authentication with proper JWT tokens
 
 #### 📁 Files Created:
 ```
@@ -132,6 +136,11 @@ src/app/auth/
 ├── signup/page.tsx
 ├── login/page.tsx
 └── cal/callback/page.tsx
+
+src/app/admin/
+├── login/page.tsx (admin login page)
+├── page.tsx (admin dashboard)
+└── users/page.tsx (user management interface)
 ```
 
 #### 🔧 Authentication Features Implemented:
@@ -145,35 +154,64 @@ src/app/auth/
 - ✅ Role-based access control (pastor/admin)
 - ✅ Automatic redirects
 - ✅ Logout functionality
+- ✅ JWT token generation and validation
+- ✅ Admin user creation and management
+- ✅ User status management (activate/deactivate)
+- ✅ Admin dashboard with statistics
+- ✅ Proper JWT token expiration (1 hour)
+- ✅ Both admin and regular user authentication working
 
 ---
 
-### 1.3 Basic User Management 🔄 IN PROGRESS
+### 1.3 Basic User Management ✅ COMPLETED
 
-**Status:** 🔄 IN PROGRESS  
-**Started:** 2025-01-27  
-**Dependencies:** 1.2 🔄
+**Status:** ✅ COMPLETED  
+**Completion Date:** 2025-01-27  
+**Dependencies:** 1.2 ✅
 
 #### ✅ Completed Tasks:
 - [x] Set up user context in frontend (Zustand store)
 - [x] Create user profile management structure
 - [x] Add role-based access control foundation
 - [x] Integrate with authentication flow
-
-#### 🔄 In Progress Tasks:
-- [ ] Create User entity integration (backend needed)
-- [ ] Implement ChurchHub user creation flow (backend integration needed)
-- [ ] Integrate Cal.com user creation (backend integration needed)
+- [x] Create User entity integration (backend implemented)
+- [x] Implement ChurchHub user creation flow (backend integration)
+- [x] Integrate Cal.com user creation (backend integration)
+- [x] Create admin user management interface
+- [x] Implement user status management
 
 #### ✅ Deliverables:
 - [x] User context available throughout app
 - [x] Role-based access control foundation
 - [x] User profile management structure
+- [x] Complete user management system
+- [x] Admin user creation and management
+- [x] User status management (active/inactive)
 
 #### 📁 Files Created:
 ```
 src/lib/auth.ts (User interface and management)
 src/components/layout/DashboardLayout.tsx (user profile display)
+
+api/src/auth/
+├── auth.controller.ts (admin login endpoint)
+├── auth.service.ts (JWT authentication service)
+├── auth.module.ts (JWT module configuration)
+├── jwt-auth.guard.ts (JWT authentication guard)
+├── roles.decorator.ts (role-based access control)
+└── roles.guard.ts (role enforcement guard)
+
+api/src/admin/
+├── admin.controller.ts (admin API endpoints)
+├── admin.service.ts (admin business logic)
+└── admin.module.ts (admin module configuration)
+
+api/src/entities/
+└── user.entity.ts (User entity with roles and preferences)
+
+api/scripts/
+├── create-admin.ts (admin user creation script)
+└── test-password.ts (password testing utility)
 ```
 
 #### 🔧 User Management Features Implemented:
@@ -183,6 +221,13 @@ src/components/layout/DashboardLayout.tsx (user profile display)
 - ✅ User profile display in dashboard
 - ✅ Session persistence
 - ✅ User context throughout application
+- ✅ JWT token authentication system
+- ✅ Admin user creation and management
+- ✅ User status management (activate/deactivate)
+- ✅ Admin dashboard with user statistics
+- ✅ Role-based access control (admin/user/pastor)
+- ✅ Password hashing with bcrypt
+- ✅ User preferences and metadata storage
 
 #### 🔧 Cal.com Integration Features Implemented:
 - ✅ Complete Cal.com API client with all endpoints
@@ -194,6 +239,25 @@ src/components/layout/DashboardLayout.tsx (user profile display)
 - ✅ Bookings management with filtering
 - ✅ Responsive design for all booking interfaces
 - ✅ ChurchHub branding throughout Cal.com components
+
+#### 🔧 Backend API Features Implemented:
+- ✅ Complete booking CRUD operations with authentication
+- ✅ Cal.com webhook handling for booking events
+- ✅ Secure notes with AES-GCM encryption
+- ✅ Audit logging for all booking operations
+- ✅ Pastor profile endpoints for public access
+- ✅ Booking statistics and analytics
+- ✅ JWT authentication guard
+- ✅ Role-based access control
+- ✅ AI summary generation integration
+- ✅ Database synchronization with Cal.com
+- ✅ Admin authentication system
+- ✅ User management API endpoints
+- ✅ JWT token generation with proper expiration (1 hour)
+- ✅ Password hashing and validation
+- ✅ User status management
+- ✅ Admin dashboard statistics
+- ✅ Regular user authentication with proper JWT tokens
 
 ---
 
@@ -258,18 +322,47 @@ src/components/booking/
 
 ## Phase 3: Core Booking System
 
-### 3.1 Booking Management Backend ⏳ PENDING
+### 3.1 Booking Management Backend ✅ COMPLETED
 
-**Status:** ⏳ PENDING  
-**Dependencies:** 2.2 ⏳
+**Status:** ✅ COMPLETED  
+**Completion Date:** 2025-01-27  
+**Dependencies:** 2.2 ✅
 
-#### 📋 Planned Tasks:
-- [ ] Create Booking entity and schema
-- [ ] Implement booking CRUD operations
-- [ ] Set up Cal.com webhook handling
-- [ ] Create booking synchronization
-- [ ] Implement booking statistics
-- [ ] Integrate AI summary generation with bookings
+#### ✅ Completed Tasks:
+- [x] Create Booking entity and schema
+- [x] Implement booking CRUD operations
+- [x] Set up Cal.com webhook handling
+- [x] Create booking synchronization
+- [x] Implement booking statistics
+- [x] Integrate AI summary generation with bookings
+
+#### ✅ Deliverables:
+- [x] Complete booking management API
+- [x] Cal.com webhook integration
+- [x] Secure notes with encryption
+- [x] Audit logging system
+- [x] Pastor profile endpoints
+- [x] JWT authentication guard
+
+#### 📁 Files Created:
+```
+src/bookings/
+├── bookings.controller.ts (complete CRUD API)
+├── bookings.service.ts (business logic with encryption)
+└── bookings.module.ts (module configuration)
+
+src/pastors/
+├── pastors.controller.ts (public pastor endpoints)
+├── pastors.service.ts (pastor profile logic)
+└── pastors.module.ts (module configuration)
+
+src/auth/
+└── jwt-auth.guard.ts (JWT authentication guard)
+
+src/webhooks/
+├── webhooks.controller.ts (Cal.com webhook handlers)
+└── webhooks.service.ts (webhook processing logic)
+```
 
 ---
 
@@ -413,17 +506,24 @@ src/app/dashboard/bookings/page.tsx (bookings management page)
 
 ### 📊 Progress Summary:
 - **Phase 1.1**: ✅ 100% Complete
-- **Phase 1.2**: ✅ 100% Complete
-- **Phase 1.3**: ✅ 100% Complete
+- **Phase 1.2**: ✅ 100% Complete (JWT authentication fixed)
+- **Phase 1.3**: ✅ 100% Complete (user management system)
 - **Phase 2.1**: ✅ 100% Complete
 - **Phase 2.2**: ✅ 100% Complete
+- **Phase 3.1**: ✅ 100% Complete (booking management backend)
 - **Phase 3.2**: ✅ 100% Complete (public booking pages)
 - **Phase 3.3**: ✅ 100% Complete (dashboard overview)
-- **Phase 3.1**: ⏳ 0% Complete (backend integration needed)
 - **Phase 4**: ⏳ 0% Complete
 - **Phase 5**: ⏳ 0% Complete
 
-### 🎉 Overall Progress: **60% Complete**
+### 🎉 Overall Progress: **80% Complete**
+
+### 🔧 Recent Fixes (2025-01-27):
+- ✅ **JWT Token Expiration Fixed**: Tokens now properly expire in 1 hour instead of 3 seconds
+- ✅ **Admin Authentication Working**: Admin login and dashboard fully functional
+- ✅ **Regular User Authentication**: CalLookupService now generates proper JWT tokens
+- ✅ **User Management Interface**: Admin can view and manage all users
+- ✅ **Environment Configuration**: Proper JWT configuration in .env file
 
 ---
 
@@ -446,35 +546,35 @@ NEXT_PUBLIC_APP_ENV=development
 NODE_ENV=development
 ```
 
-### 📋 Backend Environment Variables Needed:
+### ✅ Backend Environment Variables (Configured):
 ```env
 # Database
-DATABASE_URL=postgresql://user:password@localhost:5432/churchhub_dev
+DATABASE_URL=postgresql://neondb_owner:***@ep-sweet-violet-ad3128ci-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
 DATABASE_CA_CERT=
 DATABASE_SSL=false
 
 # Cal.com (Primary Auth)
-CAL_CLIENT_SECRET=your_dev_cal_client_secret
-CAL_CLIENT_ID=your_dev_cal_client_id
+CAL_CLIENT_SECRET=*** (configured)
+CAL_CLIENT_ID=cmgdzlviq0003qd1r1ljlj91a
 CAL_API_URL=https://api.cal.com/v2
 CAL_REDIRECT_URI=http://localhost:3000/auth/cal/callback
 CAL_WEBHOOK_SECRET=your_dev_webhook_secret
 
 # AI Integration
-OPENAI_API_KEY=your_dev_openai_api_key
+OPENAI_API_KEY=*** (configured)
 AI_PROVIDER=openai
 AI_MODEL=gpt-4o-mini
 
 # Background Workers (Railway Redis)
-REDIS_URL=redis://default:password@redis.railway.internal:6379
+REDIS_URL=redis://default:***@switchyard.proxy.rlwy.net:43438
 WORKER_CONCURRENCY=5
 
 # Security
-ENCRYPTION_KEY=your_dev_encryption_key_32_chars
+ENCRYPTION_KEY=*** (configured)
 ENCRYPTION_ALGORITHM=aes-256-gcm
-JWT_SECRET=your_dev_jwt_secret
-SESSION_SECRET=your_dev_session_secret
-API_SECRET_KEY=your_dev_api_secret_key
+JWT_SECRET=*** (configured)
+SESSION_SECRET=*** (configured)
+API_SECRET_KEY=*** (configured)
 
 # Monitoring (Optional)
 SENTRY_DSN=your_dev_sentry_dsn
@@ -484,6 +584,9 @@ LOG_LEVEL=debug
 NODE_ENV=development
 PORT=3001
 HOST=localhost
+
+# JWT Configuration (Fixed)
+JWT_EXPIRES_IN=1h
 ```
 
 ---
@@ -515,12 +618,14 @@ npm run dev
 - [x] Responsive design tested
 - [x] Authentication flow tested (UI only)
 
-### 📋 Backend Testing Needed:
-- [ ] API endpoint testing
-- [ ] Cal.com integration testing
-- [ ] Database connection testing
-- [ ] Authentication flow testing
-- [ ] Webhook testing
+### ✅ Backend Testing Status:
+- [x] API endpoint testing (admin endpoints working)
+- [x] Database connection testing (Neon database connected)
+- [x] Authentication flow testing (JWT authentication working)
+- [x] Admin user creation and management testing
+- [x] JWT token generation and validation testing
+- [ ] Cal.com integration testing (pending)
+- [ ] Webhook testing (pending)
 
 ---
 

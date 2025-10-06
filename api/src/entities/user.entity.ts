@@ -8,8 +8,8 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
-  calUserId: number; // Cal.com user ID
+  @Column({ unique: true, nullable: true })
+  calUserId: number; // Cal.com user ID (nullable for admin users)
 
   @Column()
   username: string; // Cal.com username
@@ -18,10 +18,16 @@ export class User {
   email: string;
 
   @Column({ nullable: true })
+  password: string; // Hashed password for local auth
+
+  @Column({ nullable: true })
   displayName: string;
 
   @Column({ default: true })
   isActive: boolean;
+
+  @Column({ default: 'user' })
+  role: string; // 'admin', 'user', 'pastor'
 
   @Column({ type: 'jsonb', nullable: true })
   preferences: Record<string, any>;

@@ -6,6 +6,8 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { FormsModule } from './forms/forms.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { AuthModule } from './auth/auth.module';
+import { PastorsModule } from './pastors/pastors.module';
+import { AdminModule } from './admin/admin.module';
 import * as entities from './entities';
 
 @Module({
@@ -31,6 +33,8 @@ import * as entities from './entities';
     FormsModule,
     BookingsModule,
     AuthModule,
+    PastorsModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

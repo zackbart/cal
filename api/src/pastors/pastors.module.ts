@@ -2,18 +2,16 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { BookingsController } from './bookings.controller';
-import { BookingsService } from './bookings.service';
-import { Booking } from '../entities/booking.entity';
+import { PastorsController } from './pastors.controller';
+import { PastorsService } from './pastors.service';
 import { User } from '../entities/user.entity';
-import { ContextSummary } from '../entities/context-summary.entity';
-import { AuditLog } from '../entities/audit-log.entity';
+import { Booking } from '../entities/booking.entity';
 import { CalLookupService } from '../tokens/cal-lookup.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Booking, User, ContextSummary, AuditLog]),
+    TypeOrmModule.forFeature([User, Booking]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -25,8 +23,8 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
       inject: [ConfigService],
     }),
   ],
-  controllers: [BookingsController],
-  providers: [BookingsService, CalLookupService, JwtAuthGuard],
-  exports: [BookingsService],
+  controllers: [PastorsController],
+  providers: [PastorsService, CalLookupService, JwtAuthGuard],
+  exports: [PastorsService],
 })
-export class BookingsModule {}
+export class PastorsModule {}
